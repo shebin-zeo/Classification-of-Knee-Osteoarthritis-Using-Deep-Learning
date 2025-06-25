@@ -1,0 +1,1 @@
+This repository contains a deep learning-based project to classify the severity of knee osteoarthritis using X-ray images. The project includes model training, evaluation, explainability with Grad-CAM, and deployment via a Streamlit web app.
