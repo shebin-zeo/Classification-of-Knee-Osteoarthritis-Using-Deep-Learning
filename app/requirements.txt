@@ -1,8 +1,8 @@
 streamlit
-tensorflow
 matplotlib
-pillow
 pandas
 numpy
+tensorflow==2.13.0
+pillow
 folium
 streamlit-folium
