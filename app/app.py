@@ -9,7 +9,6 @@ try:
 except ImportError:
     pass
 
-
 # ----- Protobuf Compatibility Fix -----
 try:
     import google.protobuf
@@ -58,6 +57,10 @@ from PIL import Image
 import folium
 from streamlit_folium import st_folium
 import time
+
+# Add 3D visualization imports
+import pyvista as pv
+from stpyvista import stpyvista
 
 # Try to import modern UI packages with fallbacks
 try:
@@ -110,6 +113,110 @@ def load_hospital_data():
     base_path = os.path.dirname(os.path.abspath(__file__))
     csv_path = os.path.join(base_path, "hospital.csv")
     return pd.read_csv(csv_path)
+
+# ──────── 3D Visualization Functions ──────────────────────────────────────────
+
+def create_knee_model(severity_level):
+    """Create a realistic knee model based on OA severity"""
+    # Create realistic knee components (simplified for demonstration)
+    femur = pv.Cylinder(center=(0, 0, 0.5), direction=(0, 0, 1), 
+                        radius=0.4, height=0.1).triangulate()
+    tibia = pv.Cylinder(center=(0, 0, -0.5), direction=(0, 0, 1), 
+                       radius=0.4, height=0.1).triangulate()
+    patella = pv.Sphere(center=(0, 0.6, 0), radius=0.15).triangulate()
+    
+    # Create cartilage
+    cartilage = pv.ParametricEllipsoid(0.3, 0.2, 0.1, center=(0, 0, 0))
+    
+    # Apply pathological changes based on severity
+    severity_params = {
+        "Healthy": {"space": 1.0, "osteophytes": 0, "cartilage_thickness": 1.0},
+        "Doubtful": {"space": 0.9, "osteophytes": 1, "cartilage_thickness": 0.9},
+        "Minimal": {"space": 0.7, "osteophytes": 2, "cartilage_thickness": 0.7},
+        "Moderate": {"space": 0.4, "osteophytes": 4, "cartilage_thickness": 0.5},
+        "Severe": {"space": 0.1, "osteophytes": 6, "cartilage_thickness": 0.2}
+    }
+    
+    params = severity_params.get(severity_level, severity_params["Healthy"])
+    
+    # Apply joint space narrowing
+    femur.translate((0, 0, params["space"]/2), inplace=True)
+    tibia.translate((0, 0, -params["space"]/2), inplace=True)
+    
+    # Apply cartilage degeneration
+    cartilage.scale([1, 1, params["cartilage_thickness"]], inplace=True)
+    
+    # Add osteophytes (bone spurs)
+    osteophytes = pv.PolyData()
+    for i in range(params["osteophytes"]):
+        angle = i * (2*np.pi/params["osteophytes"])
+        pos = [0.45*np.cos(angle), 0.45*np.sin(angle), 0]
+        spur = pv.Sphere(center=pos, radius=0.05 + 0.03*i/params["osteophytes"])
+        osteophytes = osteophytes.merge(spur)
+    
+    # Combine all components
+    knee = femur.merge(tibia).merge(patella).merge(cartilage).merge(osteophytes)
+    
+    # Smooth the model for better appearance
+    return knee.smooth(n_iter=150, relaxation_factor=0.1)
+
+def visualize_3d_knee(model, severity):
+    """Create an interactive 3D visualization of the knee joint"""
+    plotter = pv.Plotter(window_size=[600, 400])
+    
+    # Define anatomical colors
+    bone_color = "#e0d3c0"
+    cartilage_color = "#4fc1e8"
+    spur_color = "#ff6b6b"
+    
+    # Extract components for individual coloring
+    femur = model.extract_cells(range(0, 500))
+    tibia = model.extract_cells(range(500, 1000))
+    patella = model.extract_cells(range(1000, 1500))
+    cartilage = model.extract_cells(range(1500, 2000))
+    osteophytes = model.extract_cells(range(2000, model.n_cells))
+    
+    # Add components with appropriate colors
+    plotter.add_mesh(femur, color=bone_color, opacity=0.9, 
+                    smooth_shading=True, specular=0.8)
+    plotter.add_mesh(tibia, color=bone_color, opacity=0.9, 
+                   smooth_shading=True, specular=0.8)
+    plotter.add_mesh(patella, color=bone_color, opacity=0.9, 
+                   smooth_shading=True, specular=0.8)
+    plotter.add_mesh(cartilage, color=cartilage_color, opacity=0.7, 
+                   smooth_shading=True, specular=0.5)
+    
+    if osteophytes.n_cells > 0:
+        plotter.add_mesh(osteophytes, color=spur_color, opacity=0.9, 
+                        smooth_shading=True, specular=0.3)
+    
+    # Add annotations
+    plotter.add_point_labels([(0, 0, 0.7)], ["Femur"], 
+                           text_color="black", font_size=12, shape=None)
+    plotter.add_point_labels([(0, 0, -0.7)], ["Tibia"], 
+                           text_color="black", font_size=12, shape=None)
+    plotter.add_point_labels([(0, 0.7, 0)], ["Patella"], 
+                           text_color="black", font_size=12, shape=None)
+    
+    if severity != "Healthy":
+        plotter.add_point_labels([(0, 0, 0)], ["Joint Space Narrowing"], 
+                               text_color="red", font_size=12, shape=None)
+        if severity in ["Moderate", "Severe"]:
+            plotter.add_point_labels([(0.4, 0.4, 0)], ["Osteophytes"], 
+                                   text_color="red", font_size=12, shape=None)
+    
+    # Add coordinate system and set background
+    plotter.add_axes(line_width=5, labels_off=True)
+    plotter.set_background("white")
+    
+    # Set informative camera position
+    plotter.camera_position = [
+        (2.5, -1.5, 1.5),  # Position
+        (0, 0, 0),         # Focal point
+        (0, 0, 1)          # View up
+    ]
+    
+    return plotter
 
 # ──────── Streamlit Page Config ───────────────────────────────────────────────
 
@@ -251,6 +358,16 @@ h1, h2, h3, h4, h5, h6 {
 .stDataFrame {
     border-radius: 12px !important;
 }
+
+/* 3D Visualization Container */
+.pyvista-container {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 10px;
+    margin: 15px 0;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -331,13 +448,15 @@ with tab_xray:
                         preds = model.predict(inp, verbose=0)[0]
                         idx = int(np.argmax(preds))
                         prob = preds[idx] * 100
+                        grade = class_names[idx]
 
                         st.session_state.update({
                             "preds": preds,
                             "grade_idx": idx,
                             "prob": prob,
                             "input_arr": inp,
-                            "pred_done": True
+                            "pred_done": True,
+                            "severity_grade": grade
                         })
                         st.toast("Analysis complete!", icon="✅")
                     except Exception as e:
@@ -366,7 +485,7 @@ with tab_xray:
         with col3:
             with st.container(border=True):
                 st.subheader("📋 Diagnostic Summary")
-                grade = class_names[st.session_state['grade_idx']]
+                grade = st.session_state["severity_grade"]
                 severity_colors = {
                     "Healthy": "#2a9d8f",
                     "Doubtful": "#8ac926",
@@ -416,6 +535,11 @@ with tab_xray:
                     ax.set_xlabel('Probability (%)')
                     ax.set_title('Severity Distribution')
                     st.pyplot(fig)
+                    
+                # Add 3D Visualization Button
+                st.divider()
+                if st.button("🦴 View 3D Joint Model", use_container_width=True):
+                    st.session_state["show_3d_model"] = True
 
         with col4:
             with st.container(border=True):
@@ -490,6 +614,29 @@ with tab_xray:
                                     )
                                 except:
                                     st.warning("Map display unavailable")
+                
+                # 3D Visualization Section
+                if st.session_state.get("show_3d_model", False):
+                    st.divider()
+                    st.subheader("🔬 3D Joint Visualization")
+                    st.info(f"Interactive 3D model showing {grade} osteoarthritis effects")
+                    
+                    with st.spinner("Generating 3D visualization..."):
+                        try:
+                            # Create 3D model based on severity
+                            knee_model = create_knee_model(grade)
+                            
+                            # Visualize the 3D model
+                            plotter = visualize_3d_knee(knee_model, grade)
+                            
+                            # Display in Streamlit
+                            stpyvista(plotter, key="knee_3d")
+                            
+                            # Add interaction tips
+                            st.caption("🖱️ **Interact:** Rotate with left-click, Pan with right-click, Zoom with scroll")
+                            st.caption("📱 **Mobile:** Use touch gestures to rotate and zoom")
+                        except Exception as e:
+                            st.error(f"3D visualization failed: {str(e)}")
 
 # ──────── Clinical Consultation Tab ───────────────────────────────────────────
 
@@ -596,7 +743,8 @@ with tab_chat:
     if st.button("🔄 Start New Conversation", use_container_width=True):
         st.session_state.chat_history = []
         st.rerun()
+
 # ──────── Footer ──────────────────────────────────────────────────────────────
 
 st.divider()
-st.caption("© 2024 OrthoScan Diagnostics | For clinical use only | v2.2.0")
+st.caption("© 2024 OrthoScan Diagnostics | For clinical use only | v3.0")
