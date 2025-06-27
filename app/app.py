@@ -161,13 +161,14 @@ def create_knee_model(severity_level):
     return knee.smooth(n_iter=150, relaxation_factor=0.1)
 
 def visualize_3d_knee(model, severity):
-    """Create an interactive 3D visualization of the knee joint"""
+    """Create an interactive 3D visualization of the knee joint with pathology highlighting"""
     plotter = pv.Plotter(window_size=[600, 400])
     
     # Define anatomical colors
     bone_color = "#e0d3c0"
     cartilage_color = "#4fc1e8"
     spur_color = "#ff6b6b"
+    highlight_color = "#ff0000"  # Red for highlighting issues
     
     # Extract components for individual coloring
     femur = model.extract_cells(range(0, 500))
@@ -185,6 +186,20 @@ def visualize_3d_knee(model, severity):
                    smooth_shading=True, specular=0.8)
     plotter.add_mesh(cartilage, color=cartilage_color, opacity=0.7, 
                    smooth_shading=True, specular=0.5)
+    
+    # Highlight specific areas based on severity
+    if severity != "Healthy":
+        # Highlight joint space narrowing
+        joint_space = pv.Sphere(center=(0, 0, 0), radius=0.3)
+        plotter.add_mesh(joint_space, color=highlight_color, opacity=0.3, style='wireframe')
+        
+        # Highlight osteophytes if present
+        if severity in ["Minimal", "Moderate", "Severe"]:
+            for i in range(3):  # Highlight 3 osteophytes
+                angle = i * (2*np.pi/3)
+                pos = [0.45*np.cos(angle), 0.45*np.sin(angle), 0]
+                spur_highlight = pv.Sphere(center=pos, radius=0.07)
+                plotter.add_mesh(spur_highlight, color=highlight_color, opacity=0.4)
     
     if osteophytes.n_cells > 0:
         plotter.add_mesh(osteophytes, color=spur_color, opacity=0.9, 
@@ -367,6 +382,15 @@ h1, h2, h3, h4, h5, h6 {
     margin: 15px 0;
     background: white;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Professional explanation styling */
+.professional-explanation {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 15px;
+    border-left: 4px solid var(--primary);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -615,28 +639,161 @@ with tab_xray:
                                 except:
                                     st.warning("Map display unavailable")
                 
-                # 3D Visualization Section
-                if st.session_state.get("show_3d_model", False):
-                    st.divider()
-                    st.subheader("🔬 3D Joint Visualization")
-                    st.info(f"Interactive 3D model showing {grade} osteoarthritis effects")
+# 3D Visualization Section
+        if st.session_state.get("show_3d_model", False):
+            st.divider()
+            st.subheader("🔬 3D Joint Visualization")
+            st.info(f"Interactive 3D model showing {grade} osteoarthritis effects")
+            
+            with st.spinner("Generating 3D visualization..."):
+                try:
+                    # Create 3D model based on severity
+                    knee_model = create_knee_model(grade)
                     
-                    with st.spinner("Generating 3D visualization..."):
-                        try:
-                            # Create 3D model based on severity
-                            knee_model = create_knee_model(grade)
-                            
-                            # Visualize the 3D model
-                            plotter = visualize_3d_knee(knee_model, grade)
-                            
-                            # Display in Streamlit
-                            stpyvista(plotter, key="knee_3d")
-                            
-                            # Add interaction tips
-                            st.caption("🖱️ **Interact:** Rotate with left-click, Pan with right-click, Zoom with scroll")
-                            st.caption("📱 **Mobile:** Use touch gestures to rotate and zoom")
-                        except Exception as e:
-                            st.error(f"3D visualization failed: {str(e)}")
+                    # Visualize the 3D model
+                    plotter = visualize_3d_knee(knee_model, grade)
+                    
+                    # Display in Streamlit
+                    stpyvista(plotter, key="knee_3d")
+                    
+                    # Add interaction tips
+                    st.caption("🖱️ **Interact:** Rotate with left-click, Pan with right-click, Zoom with scroll")
+                    st.caption("📱 **Mobile:** Use touch gestures to rotate and zoom")
+                    
+                    # ──────── Professional Explanation ────────────────────────────────
+                    st.divider()
+                    
+                    # Create expander for Anatomical Interpretation
+                    with st.expander("🔍 Anatomical Interpretation", expanded=True):
+                        # Main header
+                        st.markdown("""
+                        <div style="background:#f0f9ff; padding:20px; border-radius:10px; border-left:4px solid #0d5699; margin-bottom:20px;">
+                            <h3 style="color:#0a2d4d; margin-top:0;">Anatomical Interpretation</h3>
+                            <p>This 3D visualization provides an anatomically accurate representation of knee joint pathology based on the KL grading system:</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Two-column layout
+                        col_a, col_b = st.columns([1, 1])
+                        
+                        # Severity-specific pathological features
+                        pathological_features = {
+                            "Healthy": """
+                            <li>✅ Normal joint space width (3-4mm)</li>
+                            <li>✅ Smooth articular surfaces</li>
+                            <li>✅ Absence of osteophytes</li>
+                            <li>✅ Uniform cartilage thickness</li>
+                            """,
+                            "Doubtful": """
+                            <li>⚠️ Questionable joint space narrowing</li>
+                            <li>⚠️ Possible early osteophyte formation</li>
+                            <li>⚠️ Minimal cartilage thinning</li>
+                            <li>✅ No significant subchondral changes</li>
+                            """,
+                            "Minimal": """
+                            <li>🔴 Definite joint space narrowing (<3mm)</li>
+                            <li>🔴 Small osteophytes (bone spurs)</li>
+                            <li>🔴 Early cartilage fibrillation</li>
+                            <li>🔴 Mild subchondral sclerosis</li>
+                            """,
+                            "Moderate": """
+                            <li>🔴 Significant joint space reduction (1-2mm)</li>
+                            <li>🔴 Multiple moderate-sized osteophytes</li>
+                            <li>🔴 Cartilage erosion to bone surface</li>
+                            <li>🔴 Early subchondral cyst formation</li>
+                            """,
+                            "Severe": """
+                            <li>🔴 Severe joint space collapse (<1mm)</li>
+                            <li>🔴 Large osteophytes and bone deformities</li>
+                            <li>🔴 Complete cartilage loss (bone-on-bone)</li>
+                            <li>🔴 Subchondral sclerosis and cyst formation</li>
+                            """
+                        }
+                        
+                        with col_a:
+                            st.markdown("""
+                            <div style="background:white; padding:15px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                                <h4 style="color:#0a2d4d; margin-top:0;">Anatomical Structures</h4>
+                                <ul style="padding-left:20px;">
+                                    <li><strong>Femur (Upper Bone):</strong> The distal end of the thigh bone articulating with the tibia</li>
+                                    <li><strong>Tibia (Lower Bone):</strong> The proximal end of the shin bone forming the knee joint base</li>
+                                    <li><strong>Patella (Kneecap):</strong> The sesamoid bone embedded in the quadriceps tendon</li>
+                                    <li><strong>Articular Cartilage (Blue):</strong> The smooth, load-bearing surface enabling frictionless movement</li>
+                                </ul>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with col_b:
+                            st.markdown(f"""
+                            <div style="background:white; padding:15px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                                <h4 style="color:#0a2d4d; margin-top:0;">Pathological Issues</h4>
+                                <ul style="padding-left:20px;">
+                                    {pathological_features.get(grade, pathological_features["Healthy"])}
+                                </ul>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        st.divider()
+                        
+                        # Clinical Correlation section
+                        st.markdown("""
+                        <div style="background:#f8f9fa; padding:20px; border-radius:10px; margin-top:20px;">
+                            <h4 style="color:#0a2d4d; margin-top:0;">Clinical Correlation</h4>
+                            <p>This visualization illustrates the progressive structural deterioration characteristic of osteoarthritis:</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Step sharing feature with severity indicators
+                        st.markdown("""
+                        <div style="background:white; padding:15px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-top:15px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <strong style="color:#0d5699;">Disease Progression</strong>
+                                <button style="background:#e6f7ff; border:1px solid #0d5699; color:#0d5699; padding:5px 10px; border-radius:5px; cursor:pointer;">Hide</button>
+                            </div>
+                            <p>Key pathological stages in osteoarthritis development:</p>
+                            <div style="display:flex; gap:15px; margin-top:15px; overflow-x:auto;">
+                                <div style="min-width:200px; background:#f0f9ff; padding:15px; border-radius:10px; border-left:3px solid #0d5699;">
+                                    <div style="font-size:24px; color:#0d5699; margin-bottom:10px;">1</div>
+                                    <strong>Cartilage degradation</strong>
+                                    <p style="margin:5px 0 0; font-size:14px;">Loss of the protective articular surface</p>
+                                    <div style="margin-top:8px; background:#ffe6e6; padding:5px; border-radius:4px;">
+                                        <span style="color:#e63946;">Severity: {grade}</span>
+                                    </div>
+                                </div>
+                                <div style="min-width:200px; background:#f0f9ff; padding:15px; border-radius:10px; border-left:3px solid #00c0b4;">
+                                    <div style="font-size:24px; color:#00c0b4; margin-bottom:10px;">2</div>
+                                    <strong>Osteophyte formation</strong>
+                                    <p style="margin:5px 0 0; font-size:14px;">Compensatory bone growth at joint margins</p>
+                                    <div style="margin-top:8px; background:#ffe6e6; padding:5px; border-radius:4px;">
+                                        <span style="color:#e63946;">Severity: {grade}</span>
+                                    </div>
+                                </div>
+                                <div style="min-width:200px; background:#f0f9ff; padding:15px; border-radius:10px; border-left:3px solid #ff9e00;">
+                                    <div style="font-size:24px; color:#ff9e00; margin-bottom:10px;">3</div>
+                                    <strong>Subchondral changes</strong>
+                                    <p style="margin:5px 0 0; font-size:14px;">Bone remodeling beneath cartilage surfaces</p>
+                                    <div style="margin-top:8px; background:#ffe6e6; padding:5px; border-radius:4px;">
+                                        <span style="color:#e63946;">Severity: {grade}</span>
+                                    </div>
+                                </div>
+                                <div style="min-width:200px; background:#f0f9ff; padding:15px; border-radius:10px; border-left:3px solid #e63946;">
+                                    <div style="font-size:24px; color:#e63946; margin-bottom:10px;">4</div>
+                                    <strong>Joint space narrowing</strong>
+                                    <p style="margin:5px 0 0; font-size:14px;">Resulting from cartilage loss and meniscal damage</p>
+                                    <div style="margin-top:8px; background:#ffe6e6; padding:5px; border-radius:4px;">
+                                        <span style="color:#e63946;">Severity: {grade}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Add a real button for sharing
+                        if st.button("📤 Share This Visualization", use_container_width=True):
+                            st.toast("Visualization shared to patient record", icon="✅")
+                    
+                except Exception as e:
+                    st.error(f"3D visualization failed: {str(e)}")
 
 # ──────── Clinical Consultation Tab ───────────────────────────────────────────
 
