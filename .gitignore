@@ -1,0 +1,61 @@
+.DS_Store
+*.ipynb_checkpoints
+*.hdf5
+*.h5
+# ───── Python ─────
+__pycache__/
+*.py[cod]
+*.so
+*.log
+
+# ───── Jupyter Notebooks ─────
+.ipynb_checkpoints/
+
+# ───── Environment & Dependencies ─────
+env/
+venv/
+.knee_dl_app/
+*.env
+*.yml
+*.yaml
+
+# ───── Model Files ─────
+*.h5
+*.hdf5
+*.pb
+*.ckpt
+checkpoints/
+models/
+
+# ───── Datasets ─────
+dataset/
+*.csv
+*.tsv
+*.zip
+*.tar.gz
+*.npy
+*.npz
+
+# ───── Streamlit Cache ─────
+.streamlit/
+*.pydevproject
+
+# ───── OS Specific ─────
+.DS_Store
+Thumbs.db
+
+# ───── VSCode & IDEs ─────
+.vscode/
+.idea/
+*.swp
+
+# ───── Logs ─────
+*.log
+logs/
+wandb/
+
+# ───── Images/Outputs ─────
+outputs/
+*.png
+*.jpg
+*.jpeg
