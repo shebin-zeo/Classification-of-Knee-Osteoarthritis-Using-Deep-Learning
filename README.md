@@ -258,6 +258,13 @@ Prompt the user to seek medical consultation for further evaluation
 
 - [Knee Osteoarthritis Dataset with Severity
   Grading](https://www.kaggle.com/datasets/shashwatwork/knee-osteoarthritis-dataset-with-severity)
+- [Transfer Learning-Based Smart Features 
+  Engineering for Osteoarthritis Diagnosis
+   From Knee X-Ray Images](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10179858)
+- [ Machine Learning-Based Automatic Classification
+ of Knee Osteoarthritis Severity Using Gait Data
+ and Radiographic Images
+ ](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9130657)
 
 ---
 
