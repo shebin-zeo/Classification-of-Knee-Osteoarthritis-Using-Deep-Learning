@@ -27,12 +27,9 @@ Grading](https://www.kaggle.com/datasets/shashwatwork/knee-osteoarthritis-datase
 
 ![KL Score](assets/kl-score.png)
 
-## Purpose
+## 🎯 Project Objective
 
-The purpose of this project is to correctly classify the severity of
-osteoarthritis based on X-ray images.
-
-![streamlit app - knee_dl_app](assets/streamlit_knee_ss.png)
+To build an AI model that automatically classifies the severity of knee osteoarthritis from X-ray images using deep learning and provides a user-friendly prediction tool.
 
 ## 🗂 Project Structure
 
@@ -71,9 +68,10 @@ cd Knee_OST
 
 ### 🐍 Create & Activate Conda Environment
 
-    ```shell
-    (base) C: conda env create -f environment.yml
-    ```
+   ```shell
+conda env create -f environment.yml
+```
+
 
 - Activate the environment
 
@@ -102,9 +100,10 @@ cd Knee_OST
 
 ### 🚀 Launch the Streamlit App
 
-    ```shell
-    (knee_dl_app)  C: streamlit run app/app.py
-      ```
+  ```shell
+streamlit run app/app.py
+```
+
 
     As soon as you run the script, a local Streamlit server will spin up, and
     your app will open in a new tab in your default web browser.
@@ -251,7 +250,9 @@ Prompt the user to seek medical consultation for further evaluation
 
 ####  YouTube
 
-[![Knee Arthritis X-ray Stages: What You Need To Know](https://youtu.be/WiZoV8PJ_tQ?si=d7w0D9WnXepBtmrq "Knee Arthritis X-ray Stages: What You Need To Know")
+[![Knee Arthritis X-ray Stages: What You Need To Know](https://img.youtube.com/vi/WiZoV8PJ_tQ/0.jpg)](https://youtu.be/WiZoV8PJ_tQ "Knee Arthritis X-ray Stages: What You Need To Know")
+
+
 
 ## References
 
