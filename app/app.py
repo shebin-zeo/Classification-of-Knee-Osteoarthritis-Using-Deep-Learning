@@ -161,14 +161,13 @@ def create_knee_model(severity_level):
     return knee.smooth(n_iter=150, relaxation_factor=0.1)
 
 def visualize_3d_knee(model, severity):
-    """Create an interactive 3D visualization of the knee joint with pathology highlighting"""
+    """Create an interactive 3D visualization of the knee joint"""
     plotter = pv.Plotter(window_size=[600, 400])
     
     # Define anatomical colors
     bone_color = "#e0d3c0"
     cartilage_color = "#4fc1e8"
     spur_color = "#ff6b6b"
-    highlight_color = "#ff0000"  # Red for highlighting issues
     
     # Extract components for individual coloring
     femur = model.extract_cells(range(0, 500))
@@ -186,20 +185,6 @@ def visualize_3d_knee(model, severity):
                    smooth_shading=True, specular=0.8)
     plotter.add_mesh(cartilage, color=cartilage_color, opacity=0.7, 
                    smooth_shading=True, specular=0.5)
-    
-    # Highlight specific areas based on severity
-    if severity != "Healthy":
-        # Highlight joint space narrowing
-        joint_space = pv.Sphere(center=(0, 0, 0), radius=0.3)
-        plotter.add_mesh(joint_space, color=highlight_color, opacity=0.3, style='wireframe')
-        
-        # Highlight osteophytes if present
-        if severity in ["Minimal", "Moderate", "Severe"]:
-            for i in range(3):  # Highlight 3 osteophytes
-                angle = i * (2*np.pi/3)
-                pos = [0.45*np.cos(angle), 0.45*np.sin(angle), 0]
-                spur_highlight = pv.Sphere(center=pos, radius=0.07)
-                plotter.add_mesh(spur_highlight, color=highlight_color, opacity=0.4)
     
     if osteophytes.n_cells > 0:
         plotter.add_mesh(osteophytes, color=spur_color, opacity=0.9, 

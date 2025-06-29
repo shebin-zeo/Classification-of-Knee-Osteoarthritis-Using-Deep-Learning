@@ -104,7 +104,7 @@ cd Knee_OST
 
     ```shell
     (knee_dl_app)  C: streamlit run app/app.py
-    ```
+      ```
 
     As soon as you run the script, a local Streamlit server will spin up, and
     your app will open in a new tab in your default web browser.
@@ -251,7 +251,7 @@ Prompt the user to seek medical consultation for further evaluation
 
 ####  YouTube
 
-[![Knee Arthritis X-ray Stages: What You Need To Know](https://img.youtube.com/vi/gl28zQAs_rk/0.jpg)](https://www.youtube.com/watch?v=gl28zQAs_rk "Knee Arthritis X-ray Stages: What You Need To Know")
+[![Knee Arthritis X-ray Stages: What You Need To Know](https://youtu.be/WiZoV8PJ_tQ?si=d7w0D9WnXepBtmrq "Knee Arthritis X-ray Stages: What You Need To Know")
 
 ## References
 
